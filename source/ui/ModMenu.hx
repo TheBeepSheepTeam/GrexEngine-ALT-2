@@ -1,5 +1,7 @@
 package ui;
 
+#if polymod
+
 import flixel.FlxG;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.text.FlxText;
@@ -110,7 +112,7 @@ class ModMenu extends ui.OptionsState.Page
 
 		enabledMods = [];
 
-		modList = Polymod.scan(MOD_PATH);
+		modList = Polymod.scan();
 
 		trace(modList);
 
@@ -155,3 +157,5 @@ class ModMenuItem extends FlxText
 		super.update(elapsed);
 	}
 }
+
+#end

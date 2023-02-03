@@ -1,6 +1,8 @@
 package;
 
+#if newgrounds
 import NGio;
+#end
 import flixel.FlxG;
 import flixel.FlxObject;
 import flixel.FlxSprite;
