@@ -91,6 +91,11 @@ class PlayState extends MusicBeatState
 	private var gfSpeed:Int = 1;
 	private var health:Float = 1;
 	private var combo:Int = 0;
+	private var misses:Int = 0;
+	private var accuracy:Float = 0.00;
+	private var totalNotesHit:Float = 0;
+	private var totalPlayed:Int = 0;
+	private var ss:Bool = false;
 
 	private var healthBarBG:FlxSprite;
 	private var healthBar:FlxBar;
@@ -833,7 +838,13 @@ class PlayState extends MusicBeatState
 		// healthBar
 		add(healthBar);
 
-		scoreTxt = new FlxText(healthBarBG.x + healthBarBG.width - 190, healthBarBG.y + 30, 0, "", 20);
+				// Add Grex Engine watermark
+				var grexEngineWatermark = new FlxText(4,FlxG.height - 4,0,SONG.song + " " + (storyDifficulty == 2 ? "Hard" : storyDifficulty == 1 ? "Normal" : "Easy") + " // GE 0.1.0", 16);
+				grexEngineWatermark.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE,FlxColor.BLACK);
+				grexEngineWatermark.scrollFactor.set();
+				add(grexEngineWatermark);
+
+		scoreTxt = new FlxText(healthBarBG.x + healthBarBG.width / 2 - 150, healthBarBG.y + 50, 0, "", 20);
 		scoreTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		scoreTxt.scrollFactor.set();
 		add(scoreTxt);
@@ -929,6 +940,24 @@ class PlayState extends MusicBeatState
 
 		super.create();
 	}
+
+	function updateAccuracy()
+		{
+
+			totalPlayed += 1;
+			accuracy = totalNotesHit / totalPlayed * 100;
+			if (accuracy >= 100.00)
+			{
+				if (ss && misses == 0)
+					accuracy = 100.00;
+				else
+				{
+					accuracy = 99.98;
+					ss = false;
+				}
+			}
+
+		}
 
 	function ughIntro()
 	{
@@ -1857,6 +1886,14 @@ class PlayState extends MusicBeatState
 	var startedCountdown:Bool = false;
 	var canPause:Bool = true;
 
+	function truncateFloat( number : Float, precision : Int): Float {
+		var num = number;
+		num = num * Math.pow(10, precision);
+		trace(totalNotesHit + '/' + totalPlayed + '* 100 = ' + accuracy);
+		num = Math.round( num ) / Math.pow(10, precision);
+		return num;
+		}
+
 	override public function update(elapsed:Float)
 	{
 		// makes the lerp non-dependant on the framerate
@@ -1921,7 +1958,9 @@ class PlayState extends MusicBeatState
 
 		super.update(elapsed);
 
-		scoreTxt.text = "Score:" + songScore;
+		// taken from a very old version of grex engine lol 
+
+		scoreTxt.text = "Score:" + songScore + " // Misses:" + misses + " // Accuracy:" + truncateFloat(accuracy, 2) + "%";
 
 		if (controls.PAUSE && startedCountdown && canPause)
 		{
@@ -2233,7 +2272,7 @@ class PlayState extends MusicBeatState
 				{
 					if (daNote.tooLate)
 					{
-						health -= 0.0475;
+						health -= 0.075;
 						vocals.volume = 0;
 						killCombo();
 					}
@@ -2396,23 +2435,30 @@ class PlayState extends MusicBeatState
 		var isSick:Bool = true;
 
 		if (noteDiff > Conductor.safeZoneOffset * 0.9)
-		{
-			daRating = 'shit';
-			score = 50;
-			isSick = false; // shitty copypaste on this literally just because im lazy and tired lol!
-		}
-		else if (noteDiff > Conductor.safeZoneOffset * 0.75)
-		{
-			daRating = 'bad';
-			score = 100;
-			isSick = false;
-		}
-		else if (noteDiff > Conductor.safeZoneOffset * 0.2)
-		{
-			daRating = 'good';
-			score = 200;
-			isSick = false;
-		}
+			{
+				daRating = 'shit';
+				totalNotesHit += 0.05;
+				score = 50;
+				ss = false;
+			}
+			else if (noteDiff > Conductor.safeZoneOffset * 0.75)
+			{
+				daRating = 'bad';
+				score = 100;
+				totalNotesHit += 0.10;
+				ss = false;
+			}
+			else if (noteDiff > Conductor.safeZoneOffset * 0.2)
+			{
+				daRating = 'good';
+				totalNotesHit += 0.65;
+				score = 200;
+				ss = false;
+			}
+		if (daRating == 'sick')
+			totalNotesHit += 1;
+
+		trace('hit ' + daRating);
 
 		if (isSick)
 		{
@@ -2752,6 +2798,8 @@ class PlayState extends MusicBeatState
 			songScore -= 10;
 
 		vocals.volume = 0;
+		misses += 1;
+		updateAccuracy();
 		FlxG.sound.play(Paths.soundRandom('missnote', 1, 3), FlxG.random.float(0.1, 0.2));
 
 		/* boyfriend.stunned = true;
@@ -2805,6 +2853,8 @@ class PlayState extends MusicBeatState
 				combo += 1;
 				popUpScore(note.strumTime, note);
 			}
+			else
+				totalNotesHit += 1;
 
 			if (note.noteData >= 0)
 				health += 0.023;
@@ -2840,6 +2890,8 @@ class PlayState extends MusicBeatState
 				notes.remove(note, true);
 				note.destroy();
 			}
+
+			updateAccuracy();
 		}
 	}
 
