@@ -128,7 +128,7 @@
 	<haxelib name="flixel-ui" />
 	<!--haxelib name="newgrounds" unless="switch"/> -->
 	<haxelib name="faxe" if='switch'/>
-	<!--<haxelib name="polymod"/>-->
+	<haxelib name="polymod"/>
 	<!--<haxelib name="newgrounds"/>-->
 	<haxelib name="hxcpp-debug-server" if="desktop debug"/>
 	
@@ -165,6 +165,9 @@
 
 	<!--Disable the Flixel core sound tray-->
 	<!--<haxedef name="FLX_NO_SOUND_TRAY" />-->
+
+	<!--Enable this if you want the Polymod errors fixed-->
+	<haxedef name="hscriptPos" value="true" />
 
 	<!--Disable the Flixel sound management code-->
 	<!--<haxedef name="FLX_NO_SOUND_SYSTEM" />-->
