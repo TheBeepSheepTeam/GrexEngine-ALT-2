@@ -207,7 +207,7 @@ class PlayState extends MusicBeatState
 				dialogue = ["Not too shabby boy.", ""];
 			case 'dadbattle':
 				dialogue = [
-					"gah you think you're hot stuff?",
+					"Gah! You think you're hot stuff?",
 					"If you can beat me here...",
 					"Only then I will even CONSIDER letting you\ndate my daughter!"
 				];

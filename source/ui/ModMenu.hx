@@ -112,7 +112,7 @@ class ModMenu extends ui.OptionsState.Page
 
 		enabledMods = [];
 
-		modList = Polymod.scan({modRoot: MOD_PATH});
+		modList = Polymod.scan(MOD_PATH);
 
 		trace(modList);
 
