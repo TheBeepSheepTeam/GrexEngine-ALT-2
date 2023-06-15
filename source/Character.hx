@@ -1,11 +1,6 @@
 package;
 
 import Section.SwagSection;
-import yaml.Parser.ParserOptions;
-import yaml.Yaml;
-import hstuff.HCharacter;
-import sys.io.File;
-import sys.FileSystem;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.animation.FlxBaseAnimation;
@@ -14,62 +9,16 @@ import flixel.util.FlxSort;
 import haxe.io.Path;
 
 using StringTools;
-using StringTools;
-
-typedef SwagConfig =
-{
-	?barColor:Int,
-	?iconName:String,
-	?deadData:
-		{
-			?character:String,
-			?sound:String,
-			?music:String,
-			?end:String,
-			?bpm:Int
-		}
-}
 
 class Character extends FlxSprite
 {
 	public var animOffsets:Map<String, Array<Dynamic>>;
 	public var debugMode:Bool = false;
-	public var barColor:String = "0xe76aca";
 
 	public var isPlayer:Bool = false;
 	public var curCharacter:String = 'bf';
-	public var iconName:String = 'bf';
-	public var deadChar:String = 'bf';
-	// thx gabi
-	public var deadData:
-		{
-			char:String,
-			sound:String,
-			music:String,
-			end:String,
-			bpm:Int
-		} = {
-			char: "bf",
-			sound: "gameover/normal/fnf_loss_sfx",
-			music: "ingame/normal/gameOver",
-			end: "ingame/normal/gameOverEnd",
-			bpm: 100
-		};
 
 	public var holdTimer:Float = 0;
-	public var bopSpeed:Int = 2;
-	public var stopAnims = false;
-	public var stopSinging = false;
-	public var stopDancing = false;
-
-	var CharScript:Null<HCharacter> = null;
-
-	public var displaceData = {
-		x: 0,
-		y: 0,
-		camX: 0,
-		camY: 0
-	};
 
 	public var animationNotes:Array<Dynamic> = [];
 
@@ -79,30 +28,10 @@ class Character extends FlxSprite
 
 		animOffsets = new Map<String, Array<Dynamic>>();
 		curCharacter = character;
-		iconName = character;
-		deadChar = character;
 		this.isPlayer = isPlayer;
 
 		var tex:FlxAtlasFrames;
 		antialiasing = true;
-
-		// we config loading here
-		if (FileSystem.exists('assets/characters/$curCharacter/config.yaml'))
-		{
-			var daConf:SwagConfig = Yaml.read('assets/characters/$curCharacter/config.yaml', new ParserOptions().useObjects());
-			if (daConf.barColor != null)
-				barColor = Std.string(daConf.barColor);
-			if (daConf.iconName != null)
-				iconName = daConf.iconName;
-			if (daConf.deadData != null)
-			{
-				for (x in Reflect.fields(daConf.deadData))
-				{
-					if (Reflect.hasField(daConf, x))
-						Reflect.setField(this.deadData, x, Reflect.getProperty(daConf.deadData, x));
-				}
-			}
-		}
 
 		switch (curCharacter)
 		{
@@ -558,31 +487,10 @@ class Character extends FlxSprite
 				playAnim('idle');
 
 				flipX = true;
-			default:
-				if (FileSystem.exists('assets/characters/$curCharacter/init.hx'))
-				{
-					// var charCode = File.getContent('assets/characters/$curCharacter/init.hx');
-					try
-					{
-						CharScript = new HCharacter(this, 'assets/characters/$curCharacter/init.hx');
-						CharScript.exec("create", []);
-					}
-					catch (e)
-					{
-						CharScript = null;
-						trace('failed to load $curCharacter from hscript: ${e.message}, bf come in');
-						loadBfInstead();
-					}
-				}
-				else
-					loadBfInstead();
 		}
 
 		dance();
 		animation.finish();
-
-		if (animation.exists("danceLeft") && animation.exists("danceRight"))
-			bopSpeed = 1;
 
 		if (isPlayer)
 		{
@@ -605,9 +513,6 @@ class Character extends FlxSprite
 				}
 			}
 		}
-
-		if (CharScript != null && CharScript.exists("createPost"))
-			CharScript.exec("createPost", []);
 	}
 
 	public function loadMappedAnims()
@@ -710,12 +615,6 @@ class Character extends FlxSprite
 		}
 
 		super.update(elapsed);
-
-		if (CharScript != null && CharScript.exists("update"))
-		{
-			CharScript.exec("update", [elapsed]);
-			return;
-		}
 	}
 
 	private var danced:Bool = false;
@@ -725,12 +624,6 @@ class Character extends FlxSprite
 	 */
 	public function dance()
 	{
-		if (CharScript != null && CharScript.exists("dance"))
-		{
-			CharScript.exec("dance", []);
-			return;
-		}
-
 		if (!debugMode)
 		{
 			switch (curCharacter)
@@ -765,39 +658,6 @@ class Character extends FlxSprite
 					playAnim('idle');
 			}
 		}
-	}
-
-	// skibbidy beep po
-	// (in case there's an issue with hscript)
-	function loadBfInstead()
-	{
-		curCharacter = "bf";
-		var tex = Paths.getSparrowAtlas('characters/BOYFRIEND');
-		frames = tex;
-		quickAnimAdd('idle', 'BF idle dance');
-		quickAnimAdd('singUP', 'BF NOTE UP0');
-		quickAnimAdd('singLEFT', 'BF NOTE LEFT0');
-		quickAnimAdd('singRIGHT', 'BF NOTE RIGHT0');
-		quickAnimAdd('singDOWN', 'BF NOTE DOWN0');
-		quickAnimAdd('singUPmiss', 'BF NOTE UP MISS');
-		quickAnimAdd('singLEFTmiss', 'BF NOTE LEFT MISS');
-		quickAnimAdd('singRIGHTmiss', 'BF NOTE RIGHT MISS');
-		quickAnimAdd('singDOWNmiss', 'BF NOTE DOWN MISS');
-		quickAnimAdd('hey', 'BF HEY');
-
-		quickAnimAdd('firstDeath', "BF dies");
-		animation.addByPrefix('deathLoop', "BF Dead Loop", 24, true);
-		quickAnimAdd('deathConfirm', "BF Dead confirm");
-
-		animation.addByPrefix('scared', 'BF idle shaking', 24, true);
-
-		loadOffsetFile(curCharacter);
-
-		playAnim('idle');
-
-		flipX = true;
-
-		loadOffsetFile(curCharacter);
 	}
 
 	public function playAnim(AnimName:String, Force:Bool = false, Reversed:Bool = false, Frame:Int = 0):Void
